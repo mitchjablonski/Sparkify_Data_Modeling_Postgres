@@ -6,6 +6,19 @@ from sql_queries import *
 
 
 def process_song_file(cur, filepath):
+    '''
+    Function for processing out song files
+    
+    - Reads the file into a dataframe
+    
+    - Converts the dataframe values to a list for the song table
+    
+    - Performs an insert into the database for the song table
+    
+    - Converts the artist data values to a list for the artist table
+    
+    - Performs an insert into the table for the artist data.
+    '''
     # open song file
     df = pd.read_json(filepath, lines=True)
 
@@ -21,6 +34,25 @@ def process_song_file(cur, filepath):
 
 
 def process_log_file(cur, filepath):
+    '''
+    Primary function for processing log data
+    
+    - Reads the JSON file into pandas given the relevant file
+    
+    - Filters our data frame to only "NextSong" actions
+    
+    - Converts our ts to a datetime object
+    
+    - Generates a relevant list of time data, their columns, and pushes them into a dataframe
+    
+    - Inserts the time data
+    
+    - Gets relevant user information from dataframe, and pushes into user table
+    
+    - Queries the database for required information 
+      for songplay table, then combines this with data 
+      already in dataframe, and inserts it.
+    '''
     # open log file
     df = pd.read_json(filepath, lines=True)
 
@@ -62,7 +94,7 @@ def process_log_file(cur, filepath):
             songid, artistid = None, None
 
         # insert songplay record
-        songplay_data = (index, pd.to_datetime(row.ts, unit='ms'), 
+        songplay_data = (pd.to_datetime(row.ts, unit='ms'), 
                          row.userId, row.level, 
                          songid, artistid, row.sessionId,
                          row.location, row.userAgent)
@@ -70,6 +102,17 @@ def process_log_file(cur, filepath):
 
 
 def process_data(cur, conn, filepath, func):
+    '''
+    Our primary method for processing data
+    
+    
+    - Walks through our relevant directories, 
+      looking for any files that are a JSON.  
+      This will generate a list of files
+    
+    - Loops over the files, calling the relevant function 
+      for the data type, and performing whatever actions there specified.
+    '''
     # get all files matching extension from directory
     all_files = []
     for root, dirs, files in os.walk(filepath):
@@ -89,6 +132,17 @@ def process_data(cur, conn, filepath, func):
 
 
 def main():
+    '''
+    The main function to handle ETL of the pipeline
+    
+    - Connects to our database source
+    
+    - Calls our process data function to target song data
+    
+    - Calls our process data to target log files
+    
+    - Closes our connection
+    '''
     conn = psycopg2.connect("host=127.0.0.1 dbname=sparkifydb user=student password=student")
     cur = conn.cursor()
 
